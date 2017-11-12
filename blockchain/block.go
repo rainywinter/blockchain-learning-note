@@ -1,6 +1,8 @@
 package blockchain
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"time"
 )
@@ -36,4 +38,31 @@ func NewBlock(data string, prevBlockHash []byte) *Block {
 	block.Nonce = nonce
 
 	return block
+}
+
+//Serialize  将区块信息序列化为字节码
+func (b *Block) Serialize() []byte {
+	var result bytes.Buffer
+
+	encoder := gob.NewEncoder(&result)
+	err := encoder.Encode(b)
+	if err != nil {
+		fmt.Println("Serialize error ", err)
+		return nil
+	}
+	return result.Bytes()
+}
+
+// DeserializeBlock 反序列化，解出区块信息
+func DeserializeBlock(src []byte) *Block {
+	var block Block
+
+	decoder := gob.NewDecoder(bytes.NewReader(src))
+	err := decoder.Decode(&block)
+	if err != nil {
+		fmt.Println("Serialize error ", err)
+		return nil
+	}
+
+	return &block
 }

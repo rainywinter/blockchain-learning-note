@@ -14,7 +14,7 @@ func init() {
 func dumpChain(w http.ResponseWriter, r *http.Request) {
 	chain := blockchain.GetBlockchain()
 
-	iter := chain.Iteratore()
+	iter := chain.Iterator()
 
 	for {
 		block := iter.Next()

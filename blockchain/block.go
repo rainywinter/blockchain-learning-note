@@ -2,6 +2,7 @@ package blockchain
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/gob"
 	"fmt"
 	"time"
@@ -9,11 +10,12 @@ import (
 
 type Block struct {
 	Timestamp     int64
-	Data          []byte
 	PrevBlockHash []byte
 	Hash          []byte
 	// 为计算合适的hash值
 	Nonce int
+	// 交易
+	Transactions []*Transaction
 }
 
 // 替代为创建新区块时查找合适的哈希值
@@ -25,11 +27,18 @@ type Block struct {
 // 	b.Hash = hash[:]
 // }
 
-func NewBlock(data string, prevBlockHash []byte) *Block {
+func NewBlock(transactions []*Transaction, prevBlockHash []byte) *Block {
 	defer func(begin time.Time) {
-		fmt.Printf("Create block,data: %s, cost time: %.2f s.\n", data, time.Now().Sub(begin).Seconds())
+		fmt.Printf("Create block, cost time: %.2f s.\n", time.Now().Sub(begin).Seconds())
 	}(time.Now())
-	block := &Block{time.Now().Unix(), []byte(data), prevBlockHash, []byte{}, 0}
+
+	block := &Block{
+		Timestamp:     time.Now().Unix(),
+		PrevBlockHash: prevBlockHash,
+		Hash:          []byte{},
+		Nonce:         0,
+		Transactions:  transactions,
+	}
 
 	pow := NewProofOfWork(block)
 	nonce, hash := pow.Run()
@@ -65,4 +74,17 @@ func DeserializeBlock(src []byte) *Block {
 	}
 
 	return &block
+}
+
+// 计算区块中所有交易的hash
+func (b *Block) HashTransactions() []byte {
+	var txHashes [][]byte
+	var txHash [32]byte
+
+	for _, tx := range b.Transactions {
+		txHashes = append(txHashes, tx.ID)
+	}
+	txHash = sha256.Sum256(bytes.Join(txHashes, []byte{}))
+
+	return txHash[:]
 }
